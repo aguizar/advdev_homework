@@ -24,7 +24,7 @@ podTemplate(
 
     // Checkout Source Code.
     stage('Checkout Source') {
-      // checkout scm
+      checkout scm
     }
 
     // Build the Tasks Service
