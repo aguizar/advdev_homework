@@ -103,7 +103,7 @@ podTemplate(
           openshift.withCluster() {
             openshift.withProject(devProject) {
               // Update the image on the dev deployment config
-              openshift.set("image", "dc/tasks", "tasks=docker-registry.default.svc:5000/${devProject}/tasks:${devTag}")
+              openshift.set("image", "dc/tasks", "tasks=docker-registry.default.svc.cluster.local:5000/${devProject}/tasks:${devTag}")
 
               // Update the config maps with the potentially changed properties files
               openshift.selector("configmap", "tasks-config").delete()
@@ -137,7 +137,7 @@ podTemplate(
         sh "skopeo copy --src-tls-verify=false --dest-tls-verify=false " +
                 "--src-creds=openshift:\$(oc whoami -t) " +
                 "--dest-creds=admin:admin123 " +
-                "docker://image-registry.openshift-image-registry.svc.cluster.local:5000/${devProject}/tasks:${devTag} " +
+                "docker://docker-registry.default.svc.cluster.local:5000/${devProject}/tasks:${devTag} " +
                 "docker://nexus-registry.gpte-hw-cicd.svc.cluster.local:5000/tasks:${devTag}"
 
         // TBD: Tag the built image with the production tag.
