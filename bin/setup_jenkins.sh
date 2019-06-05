@@ -41,9 +41,6 @@ items:
 kind: List
 metadata: []" | oc create -f -
 
-oc secrets new-basicauth jenkins-secret --username=jenkins --password=redhat
-oc set build-secret --source bc/tasks-pipeline jenkins-secret
-
 # Make sure that Jenkins is fully up and running before proceeding!
 while : ; do
   echo "Checking if Jenkins is Ready..."
