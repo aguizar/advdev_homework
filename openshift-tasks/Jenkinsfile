@@ -103,7 +103,7 @@ podTemplate(
           openshift.withCluster() {
             openshift.withProject(devProject) {
               // Update the image on the dev deployment config
-              openshift.set("image", "dc/tasks", "tasks=docker-registry.default.svc.cluster.local:5000/${devProject}/tasks:${devTag}")
+              openshift.set("image", "dc/tasks", "tasks=docker-registry.default.svc:5000/${devProject}/tasks:${devTag}")
 
               // Update the config maps with the potentially changed properties files
               openshift.selector("configmap", "tasks-config").delete()
