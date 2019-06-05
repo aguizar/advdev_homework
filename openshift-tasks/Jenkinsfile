@@ -170,7 +170,7 @@ podTemplate(
               destApp = activeApp == 'tasks-blue' ? 'tasks-green' : 'tasks-blue'
 
               // Update the image for the other application
-              openshift.set("image", "dc/$destApp", "$destApp=image-registry.openshift-image-registry.svc:5000/${devProject}/tasks:${prodTag}")
+              openshift.set("image", "dc/$destApp", "$destApp=docker-registry.default.svc:5000/${devProject}/tasks:${prodTag}")
 
               // Update Config maps for other application
               openshift.selector("configmap", "$destApp-config").delete()
