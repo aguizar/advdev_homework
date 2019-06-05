@@ -21,6 +21,29 @@ oc new-build -D $'FROM docker.io/openshift/jenkins-agent-maven-35-centos7:v3.11\
       USER root\nRUN yum -y install skopeo && yum clean all\n
       USER 1001' --name=jenkins-agent-appdev
 
+# Create pipeline build config pointing to the ${REPO} with contextDir `openshift-tasks`
+echo "apiVersion: v1
+items:
+- kind: "BuildConfig"
+  apiVersion: "v1"
+  metadata:
+    name: "tasks-pipeline"
+  spec:
+    source:
+      type: "Git"
+      git:
+        uri: "${REPO}"
+      contextDir: openshift-tasks
+    strategy:
+      type: "JenkinsPipeline"
+      jenkinsPipelineStrategy:
+        jenkinsfilePath: Jenkinsfile
+kind: List
+metadata: []" | oc create -f -
+
+oc secrets new-basicauth jenkins-secret --username=jenkins --password=redhat
+oc set build-secret --source bc/tasks-pipeline jenkins-secret
+
 # Make sure that Jenkins is fully up and running before proceeding!
 while : ; do
   echo "Checking if Jenkins is Ready..."
@@ -32,41 +55,3 @@ while : ; do
   echo "...no. Sleeping 10 seconds."
   sleep 10
 done
-
-# Create pipeline build config pointing to the ${REPO} with contextDir `openshift-tasks`
-curl -H 'Content-Type: application/xml' -d "<?xml version='1.1' encoding='UTF-8'?>
-<flow-definition plugin='workflow-job@2.25'>
-  <actions/>
-  <description>Tasks Pipeline</description>
-  <keepDependencies>false</keepDependencies>
-  <properties>
-    <io.fabric8.jenkins.openshiftsync.BuildConfigProjectProperty plugin='openshift-sync@1.0.27'>
-      <uid></uid>
-      <namespace></namespace>
-      <name></name>
-      <resourceVersion></resourceVersion>
-    </io.fabric8.jenkins.openshiftsync.BuildConfigProjectProperty>
-  </properties>
-  <definition class='org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition' plugin='workflow-cps@2.54'>
-    <scm class='hudson.plugins.git.GitSCM' plugin='git@3.9.1'>
-      <configVersion>2</configVersion>
-      <userRemoteConfigs>
-        <hudson.plugins.git.UserRemoteConfig>
-          <url>${REPO}</url>
-        </hudson.plugins.git.UserRemoteConfig>
-      </userRemoteConfigs>
-      <branches>
-        <hudson.plugins.git.BranchSpec>
-          <name>*/master</name>
-        </hudson.plugins.git.BranchSpec>
-      </branches>
-      <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
-      <submoduleCfg class='list'/>
-      <extensions/>
-    </scm>
-    <scriptPath>openshift-tasks/Jenkinsfile</scriptPath>
-    <lightweight>true</lightweight>
-  </definition>
-  <triggers/>
-  <disabled>false</disabled>
-</flow-definition>" https://jenkins-${GUID}-jenkins.apps.na311.openshift.opentlc.com/createItem
