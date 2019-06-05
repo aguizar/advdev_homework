@@ -102,15 +102,19 @@ podTemplate(
         script {
           openshift.withCluster() {
             openshift.withProject(devProject) {
-              openshift.set("image", "dc/tasks", "tasks=nexus-registry.gpte-hw-cicd.svc.cluster.local:5000/${devProject}/tasks:${devTag}")
+              // Update the image on the dev deployment config
+              openshift.set("image", "dc/tasks", "tasks=image-registry.openshift-image-registry.svc.cluster.local:5000/${devProject}/tasks:${devTag}")
 
+              // Update the config maps with the potentially changed properties files
               openshift.selector("configmap", "tasks-config").delete()
               openshift.create("configmap", "tasks-config",
                       "--from-file=configuration/application-users.properties",
                       "--from-file=configuration/application-roles.properties")
 
+              // Deploy to development Project
               openshift.selector("dc", "tasks").rollout().latest()
 
+              // Make sure the application is running and ready
               def dc = openshift.selector("dc", "tasks").object()
               def dc_version = dc.status.latestVersion
               def rc = openshift.selector("rc", "tasks-${dc_version}").object()
