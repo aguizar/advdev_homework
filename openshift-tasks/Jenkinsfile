@@ -105,6 +105,10 @@ podTemplate(
               // Update the image on the dev deployment config
               openshift.set("image", "dc/tasks", "tasks=docker-registry.default.svc:5000/${devProject}/tasks:${devTag}")
 
+              // set version environment variable
+              openshift.set("env", "dc/tasks", "--overwrite VERSION='${devTag} (tasks-dev)'")
+              openshift.apply(dc)
+
               // Update the config maps with the potentially changed properties files
               openshift.selector("configmap", "tasks-config").delete()
               openshift.create("configmap", "tasks-config",
@@ -171,6 +175,10 @@ podTemplate(
 
               // Update the image for the other application
               openshift.set("image", "dc/$destApp", "$destApp=docker-registry.default.svc:5000/${devProject}/tasks:${prodTag}")
+
+              // set version environment variable
+              openshift.set("env", "dc/${destApp}", "--overwrite VERSION='${prodTag} (${destApp})'")
+              openshift.apply(dc)
 
               // Update Config maps for other application
               openshift.selector("configmap", "$destApp-config").delete()
