@@ -107,7 +107,6 @@ podTemplate(
 
               // set version environment variable
               openshift.set("env", "dc/tasks", "--overwrite VERSION='${devTag} (tasks-dev)'")
-              openshift.apply(dc)
 
               // Update the config maps with the potentially changed properties files
               openshift.selector("configmap", "tasks-config").delete()
@@ -178,7 +177,6 @@ podTemplate(
 
               // set version environment variable
               openshift.set("env", "dc/${destApp}", "--overwrite VERSION='${prodTag} (${destApp})'")
-              openshift.apply(dc)
 
               // Update Config maps for other application
               openshift.selector("configmap", "$destApp-config").delete()
