@@ -221,12 +221,11 @@ def waitForReplicas(String dcName) {
 }
 
 def waitForContent(url, content) {
-  def ready
-  do {
+  def ready = sh(returnStdout: true, script: "curl $url").contains(content)
+  while (!ready) {
     sleep 5
-    def body = sh(returnStdout: true, script: "curl $url").trim()
-    ready = body.contains(content)
-  } while (!ready)
+    ready = sh(returnStdout: true, script: "curl $url").contains(content)
+  }
 }
 
 // Convenience Functions to read version from the pom.xml
