@@ -118,21 +118,12 @@ podTemplate(
               openshift.selector("dc", "tasks").rollout().latest()
 
               // Make sure the application is running and ready
-              def dc = openshift.selector("dc", "tasks").object()
-              def dc_version = dc.status.latestVersion
-              def rc = openshift.selector("rc", "tasks-${dc_version}").object()
-
-              echo "Waiting for tasks-${dc_version} to be ready"
-              while (rc.spec.replicas != rc.status.readyReplicas) {
-                sleep 5
-                rc = openshift.selector("rc", "tasks-${dc_version}").object()
-              }
+              waitForReplicas("tasks")
             }
           }
         }
 
-        def devContent = sh(returnStdout: true, script: "curl tasks-${GUID}-tasks-dev.apps.${CLUSTER}").trim()
-        echo "dev content: $devContent"
+        waitForContent("tasks-${GUID}-tasks-dev.apps.${CLUSTER}", "tasks-dev")
       }
 
       // Copy Image to Nexus container registry
@@ -191,14 +182,7 @@ podTemplate(
               openshift.selector("dc", destApp).rollout().latest()
 
               // Wait until application is running
-              def dc_prod = openshift.selector("dc", "${destApp}").object()
-              def dc_version = dc_prod.status.latestVersion
-              def rc_prod = openshift.selector("rc", "${destApp}-${dc_version}").object()
-              echo "Waiting for ${destApp}-${dc_version} to be ready"
-              while (rc_prod.spec.replicas != rc_prod.status.readyReplicas) {
-                sleep 5
-                rc_prod = openshift.selector("rc", "${destApp}-${dc_version}").object()
-              }
+              waitForReplicas(destApp)
             }
           }
         }
@@ -218,11 +202,31 @@ podTemplate(
           }
         }
 
-        def prodContent = sh(returnStdout: true, script: "curl tasks-${GUID}-tasks-prod.apps.${CLUSTER}").trim()
-        echo "production content: $prodContent"
+        waitForContent("tasks-${GUID}-tasks-prod.apps.${CLUSTER}", destApp)
       }
     }
   }
+}
+
+def waitForReplicas(String dcName) {
+  def dc = openshift.selector("dc", dcName).object()
+  def dcVersion = dc.status.latestVersion
+  echo "Waiting for $dcName-$dcVersion to be ready"
+
+  def rc = openshift.selector("rc", "$dcName-$dcVersion").object()
+  while (rc.spec.replicas != rc.status.readyReplicas) {
+    sleep 5
+    rc = openshift.selector("rc", "$dcName-$dcVersion").object()
+  }
+}
+
+def waitForContent(url, content) {
+  def ready
+  do {
+    sleep 5
+    def body = sh(returnStdout: true, script: "curl $url").trim()
+    ready = body.contains(content)
+  } while (!ready)
 }
 
 // Convenience Functions to read version from the pom.xml
