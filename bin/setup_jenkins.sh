@@ -49,7 +49,7 @@ metadata: []" | oc create -f -
 # Make sure that Jenkins is fully up and running before proceeding!
 while : ; do
   echo "Checking if Jenkins is Ready..."
-  AVAILABLE_REPLICAS=$(oc get dc jenkins -n ${GUID}-jenkins -o=jsonpath='{.status.availableReplicas}')
+  AVAILABLE_REPLICAS=$(oc get dc jenkins -o=jsonpath='{.status.availableReplicas}')
   if [[ "$AVAILABLE_REPLICAS" == "1" ]]; then
     echo "...Yes. Jenkins is ready."
     break
